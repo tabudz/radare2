@@ -133,9 +133,8 @@ static bool addr2line_from_sdb(RBin *bin, ut64 addr, char *file, int len, int *l
 R_API bool r_bin_addr2line(RBin *bin, ut64 addr, char *file, int len, int *line, int *column) {
 	R_RETURN_VAL_IF_FAIL (bin, false);
 
-	if (bin->cur && bin->cur->addrline.storage) {
+	if (bin->cur && bin->cur->addrline.used) {
 		RBinAddrLineStore *als = &bin->cur->addrline;
-		eprintf ("Hander2\n");
 		RBinDbgItem *item = als->al_get (als, addr);
 		if (item) {
 			// TODO: honor path
@@ -278,7 +277,6 @@ R_API char *r_bin_addr2fileline(RBin *bin, ut64 addr) {
 	char file[1024];
 	int line = 0;
 	int colu = -1;
-	eprintf ("PENE\n");
 	if (r_bin_addr2line (bin, addr, file, sizeof (file) - 1, &line, &colu)) {
 		const char *file_nopath = r_file_basename (file);
 		if (colu > 0) {
