@@ -395,11 +395,18 @@ typedef struct r_bin_file_options_t {
 typedef struct r_bin_addrline_store_t RBinAddrLineStore;
 typedef void (*RBinAddrLineAdd)(RBinAddrLineStore *bin, RBinDbgItem item); // ut64 addr, const char *file, int line, int column);
 typedef RBinDbgItem* (*RBinAddrLineGet)(RBinAddrLineStore *bin, ut64 addr);
+typedef void (*RBinAddrLineReset)(RBinAddrLineStore *bin);
+typedef void (*RBinAddrLineResetAt)(RBinAddrLineStore *bin, ut64 addr);
+typedef void (*RBinAddrLineDel)(RBinAddrLineStore *bin, ut64 addr);
 
 struct r_bin_addrline_store_t {
+	bool used; // deprecated when finished
 	void *storage;
 	RBinAddrLineAdd al_add;
 	RBinAddrLineGet al_get;
+	RBinAddrLineDel al_del;
+	RBinAddrLineReset al_reset;
+	RBinAddrLineResetAt al_reset_at;
 };
 
 // XXX: RBinFile may hold more than one RBinObject?
@@ -903,6 +910,8 @@ R_API RBinSection *r_bin_get_section_at(RBinObject *o, ut64 off, int va);
 
 /* dbginfo.c */
 // R2_600 - refactor and optimize storage
+R_API void r_bin_dbginfo_reset(RBin *bin);
+R_API void r_bin_dbginfo_reset_at(RBin *bin, ut64 addr);
 R_API RBinDbgItem *r_bin_dbgitem_at(RBin *bin, ut64 addr);
 R_API void r_bin_dbgitem_free(RBinDbgItem *di);
 R_API bool r_bin_addr2line(RBin *bin, ut64 addr, char *file, int len, int *line, int *column);

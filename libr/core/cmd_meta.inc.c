@@ -1,4 +1,4 @@
-/* radare2 - LGPL - Copyright 2009-2024 - pancake */
+/* radare2 - LGPL - Copyright 2009-2025 - pancake */
 
 #if R_INCLUDE_BEGIN
 
@@ -159,16 +159,6 @@ static RCoreHelpMessage help_msg_Cvs = {
 	NULL
 };
 
-static int remove_meta_offset(RCore *core, ut64 offset) {
-	char aoffset[SDB_NUM_BUFSZ];
-	char *aoffsetptr = sdb_itoa (offset, 16, aoffset, sizeof (aoffset));
-	if (!aoffsetptr) {
-		R_LOG_ERROR ("Failed to convert %"PFMT64x" to a key", offset);
-		return -1;
-	}
-	return sdb_unset (core->bin->cur->sdb_addrinfo, aoffsetptr, 0);
-}
-
 static bool print_meta_offset(RCore *core, ut64 addr, PJ *pj) {
 	int line;
 	char file[1024];
@@ -269,6 +259,42 @@ static bool print_addrinfo_json(void *user, const char *k, const char *v) {
 	return true;
 }
 
+static bool print_addrinfo_new(void *user, const char *k, const char *v) {
+	FilterStruct *fs = (FilterStruct*)user;
+	ut64 offset = sdb_atoi (k);
+	if (!offset || offset == UT64_MAX) {
+		return true;
+	}
+	char *subst = strdup (v);
+	char *colonpos = strchr (subst, '|');
+	if (!colonpos) {
+		colonpos = strchr (subst, ':'); // : for shell and | for db.. imho : everywhere
+	}
+	if (!colonpos) {
+		r_cons_printf ("%s\n", subst);
+	} else if (fs->filter_offset == UT64_MAX || fs->filter_offset == offset) {
+		if (fs->filter_format) {
+			*colonpos = ':';
+			r_cons_printf ("'CL %s %s\n", k, subst);
+		} else {
+			*colonpos++ = 0;
+			int line = atoi (colonpos);
+			int colu = 0;
+			char *columnpos = strchr (colonpos, '|');
+			if (columnpos) {
+				*columnpos ++ = 0;
+				colu = atoi (columnpos);
+			}
+			r_cons_printf ("file: %s\nline: %d\ncolu: %d\naddr: 0x%08"PFMT64x"\n",
+				subst, line, colu, offset);
+		}
+		fs->filter_count++;
+	}
+	free (subst);
+
+	return true;
+}
+// R2_600 - DEPRECATE
 static bool print_addrinfo(void *user, const char *k, const char *v) {
 	FilterStruct *fs = (FilterStruct*)user;
 	ut64 offset = sdb_atoi (k);
@@ -414,9 +440,9 @@ retry:
 	}
 	if (all && core->bin->cur) {
 		if (remove) {
-			sdb_reset (core->bin->cur->sdb_addrinfo);
+			r_bin_dbginfo_reset (core->bin);
 		} else {
-			eprintf ("LAPUTA\n");
+			// r_bin_dbginfo_foreach (core->bin, print_addrinfo, &fs);
 			sdb_foreach (core->bin->cur->sdb_addrinfo, print_addrinfo, &fs);
 		}
 		return 0;
@@ -444,7 +470,7 @@ retry:
 		}
 		RBinFile *bf = r_bin_cur (core->bin);
 		if (bf && bf->sdb_addrinfo) {
-			eprintf ("NOOOPE\n");
+			R_LOG_ERROR ("deprecated way to add addrinfo metadata");
 			ret = cmd_meta_add_fileline (bf->sdb_addrinfo, sp, offset);
 		} else {
 			R_LOG_TODO ("Support global SdbAddrinfo or dummy rbinfile to handle this case");
@@ -457,7 +483,7 @@ retry:
 	}
 	free (myp);
 	if (remove) {
-		remove_meta_offset (core, offset);
+		r_bin_dbginfo_reset_at (core->bin, offset);
 	} else {
 		// taken from r2 // TODO: we should move this addrinfo sdb logic into RBin.. use HT
 		fs.filter_offset = offset;

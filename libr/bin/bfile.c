@@ -523,6 +523,7 @@ static void get_strings_range(RBinFile *bf, RList *list, int min, int raw, bool 
 	string_scan_range (list, bf, min, from, to, type, raw, section);
 }
 
+//////////////////////////////////
 typedef struct {
 	RList *list;
 	RUStrpool *pool;
@@ -530,6 +531,7 @@ typedef struct {
 
 static void al_add(RBinAddrLineStore *als, RBinDbgItem item) {
 	AddrLineStore *store = als->storage;
+	als->used = true;
 	// eprintf ("ADD\n");
 	RBinDbgItemInternal *di = R_NEW0 (RBinDbgItemInternal);
 	di->addr = item.addr;
@@ -540,6 +542,26 @@ static void al_add(RBinAddrLineStore *als, RBinDbgItem item) {
 	r_list_append (store->list, di);
 }
 
+static void al_reset(RBinAddrLineStore *als) {
+	AddrLineStore *store = als->storage;
+	r_list_free (store->list);
+	store->list = r_list_newf (free);
+	r_ustrpool_free (store->pool);
+	store->pool = r_ustrpool_new ();
+}
+
+static void al_del(RBinAddrLineStore *als, ut64 addr) {
+	AddrLineStore *store = als->storage;
+
+	RListIter *iter;
+	RBinDbgItem *item;
+	r_list_foreach (store->list, iter, item) {
+		if (item->addr == addr) {
+			r_list_delete (store->list, iter);
+			break;
+		}
+	}
+}
 static RBinDbgItem* al_get(RBinAddrLineStore *als, ut64 addr) {
 	AddrLineStore *store = als->storage;
 	RListIter *iter;
@@ -566,11 +588,14 @@ static void addrline_store_init(RBinAddrLineStore *b) {
 	b->storage = (void*)als;
 	b->al_add = al_add;
 	b->al_get = al_get;
+	b->al_del = al_del;
+	b->al_reset = al_reset;
 }
 
 static void addrline_store_fini(RBinAddrLineStore *als) {
 	free (als->storage);
 }
+//////////////////////////////////
 
 R_IPI RBinFile *r_bin_file_new(RBin *bin, const char *file, ut64 file_sz, RBinFileOptions *opt, Sdb *sdb, bool steal_ptr) {
 	ut32 bf_id;

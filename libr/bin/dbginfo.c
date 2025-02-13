@@ -18,10 +18,67 @@ R_API void r_bin_dbgitem_free(RBinDbgItem *di) {
 	free (di);
 }
 
-R_API RBinDbgItem *r_bin_dbgitem_at(RBin *bin, ut64 addr) {
+R_API void r_bin_dbgitem_reset(RBin *bin) {
 	if (bin->cur && bin->cur->addrline.storage) {
 		RBinAddrLineStore *als = &bin->cur->addrline;
-		return als->al_get (als, addr);
+		if (als) {
+			als->al_reset (als);
+			return;
+		}
+	}
+}
+
+// must be tied to the rbinfile
+R_API void r_bin_dbginfo_reset(RBin *bin) {
+	if (bin->cur) {
+	       	if (bin->cur->addrline.used) {
+			RBinAddrLineStore *als = &bin->cur->addrline;
+			if (als && als->al_reset) {
+				als->al_reset (als);
+			}
+		}
+		sdb_reset (bin->cur->sdb_addrinfo);
+	}
+}
+
+R_API void r_bin_dbginfo_reset_at(RBin *bin, ut64 addr) {
+	if (bin->cur && bin->cur->addrline.used) {
+		RBinAddrLineStore *als = &bin->cur->addrline;
+		als->al_del (als, addr);
+		return;
+	}
+	// R2_600 - old sdb way here, deprecate before the release
+	char aoffset[SDB_NUM_BUFSZ];
+	char *aoffsetptr = sdb_itoa (addr, 16, aoffset, sizeof (aoffset));
+	if (!aoffsetptr) {
+		R_LOG_ERROR ("Failed to convert %"PFMT64x" to a key", addr);
+		return;
+	}
+	sdb_unset (bin->cur->sdb_addrinfo, aoffsetptr, 0);
+}
+
+R_API void r_bin_dbginfo_foreach(RBin *bin, void*cb, void *user) {
+	if (bin->cur && bin->cur->addrline.used) {
+#if 0
+		// XXX TODO
+		RBinAddrLineStore *als = &bin->cur->addrline;
+		RListIter *iter;
+		RBinDbgItem *item;
+		r_list_foreach (als, iter, item) {
+			cb (user, k, v);
+		}
+#endif
+	} else {
+		sdb_foreach (bin->cur->sdb_addrinfo, cb, user);
+	}
+}
+
+R_API RBinDbgItem *r_bin_dbgitem_at(RBin *bin, ut64 addr) {
+	if (bin->cur && bin->cur->addrline.used) {
+		RBinAddrLineStore *als = &bin->cur->addrline;
+		if (als) {
+			return als->al_get (als, addr);
+		}
 	}
 	// R2_600 - eprintf ("OLDPATH\n");
 	r_strf_var (key, 64, "0x%"PFMT64x, addr); // TODO: use sdb_itoa because its faster

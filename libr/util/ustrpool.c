@@ -7,7 +7,7 @@ R_API R_NULLABLE RUStrpool* r_ustrpool_new(void) {
 	p->size = 128;
 	p->isize = 16;
 	p->str = malloc (p->size);
-	p->idxs = calloc (sizeof (p->idxs[0]), p->isize); 
+	p->idxs = calloc (sizeof (p->idxs[0]), p->isize);
 	if (p->str) {
 		p->str[0] = 0;
 		p->bloom = r_bloom_new (1024, 2, NULL);
