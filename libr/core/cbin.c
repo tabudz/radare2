@@ -1121,7 +1121,7 @@ static void file_lines_free_kv(HtPPKv *kv) {
 }
 
 static bool bin_dwarf(RCore *core, PJ *pj, int mode) {
-	RBinDwarfRow *row;
+	RBinDbgItem *row;
 	RListIter *iter;
 	if (IS_MODE_JSON (mode)) {
 		pj_a (pj);
@@ -1245,7 +1245,7 @@ static bool bin_dwarf(RCore *core, PJ *pj, int mode) {
 				pj_ks (pj, "name", "CC");
 				pj_ks (pj, "file", file);
 				pj_ki (pj, "line_num", (int) row->line);
-				pj_kn (pj, "addr", row->address);
+				pj_kn (pj, "addr", row->addr);
 				pj_end (pj);
 
 				pj_o (pj);
@@ -1253,21 +1253,21 @@ static bool bin_dwarf(RCore *core, PJ *pj, int mode) {
 				pj_ks (pj, "file", file);
 				pj_ki (pj, "line_num", (int) row->line);
 				pj_ks (pj, "line", r_str_get (line));
-				pj_kn (pj, "addr", row->address);
+				pj_kn (pj, "addr", row->addr);
 				pj_end (pj);
 
 				pj_end (pj);
 			} else {
 				r_cons_printf ("'@0x%08"PFMT64x"'CL %s:%d\n",
-					row->address, file, (int)row->line);
+					row->addr, file, (int)row->line);
 				r_cons_printf ("'@0x%08"PFMT64x"'CC %s:%d %s\n",
-					row->address, file, row->line, r_str_get (line));
+					row->addr, file, row->line, r_str_get (line));
 			}
 			free (file);
 			free (line);
 		} else {
 			r_cons_printf ("0x%08" PFMT64x "\t%s\t%d\n",
-				       row->address, row->file, row->line);
+				       row->addr, row->file, row->line);
 		}
 	}
 	if (IS_MODE_JSON (mode)) {

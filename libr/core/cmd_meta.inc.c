@@ -416,6 +416,7 @@ retry:
 		if (remove) {
 			sdb_reset (core->bin->cur->sdb_addrinfo);
 		} else {
+			eprintf ("LAPUTA\n");
 			sdb_foreach (core->bin->cur->sdb_addrinfo, print_addrinfo, &fs);
 		}
 		return 0;
@@ -443,6 +444,7 @@ retry:
 		}
 		RBinFile *bf = r_bin_cur (core->bin);
 		if (bf && bf->sdb_addrinfo) {
+			eprintf ("NOOOPE\n");
 			ret = cmd_meta_add_fileline (bf->sdb_addrinfo, sp, offset);
 		} else {
 			R_LOG_TODO ("Support global SdbAddrinfo or dummy rbinfile to handle this case");
@@ -463,6 +465,7 @@ retry:
 		fs.fscache = sdb_new0 ();
 		PJ *pj = NULL;
 		RBinFile *bf = r_bin_cur (core->bin);
+		eprintf ("CARABA\n");
 		if (use_json) {
 			pj = r_core_pj_new (core);
 			fs.pj = pj;

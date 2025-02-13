@@ -656,16 +656,21 @@ typedef struct {
 	int end_sequence;
 } RBinDwarfState;
 
-// TODO: Rename to RBinDbgItem
 typedef struct {
-	ut64 address; // RENAME addr
-	char *file; // RENAME filename
-	unsigned int line;
-	unsigned int column;
-} RBinDwarfRow;
+	ut64 addr;
+	const char *file;
+	const char *path;
+	ut32 line;
+	ut32 column;
+} RBinDbgItem;
 
-// R2_600 - rename this struct
-#define RBinDbgItem RBinDwarfRow
+typedef struct {
+	ut64 addr;
+	ut32 path;
+	ut32 file;
+	ut32 line;
+	ut32 colu;
+} RBinDbgItemInternal;
 
 #define DWARF_INIT_LEN_64	0xffffffff
 typedef union {

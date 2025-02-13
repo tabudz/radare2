@@ -652,25 +652,36 @@ static void dex_parse_debug_item(RBinFile *bf, RBinDexClass *c, int MI, int MA, 
 				source_file = sf;
 			}
 		}
-		char offset[SDB_NUM_BUFSZ] = {0};
 		if (R_STR_ISEMPTY (source_file)) {
 			continue;
 		}
+#if 0
+		char offset[SDB_NUM_BUFSZ] = {0};
 		char *fileline = r_str_newf ("%s|%"PFMT64d, source_file, pos->line);
 		char *offset_ptr = sdb_itoa (pos->address + paddr, 16, offset, sizeof (offset));
 		sdb_set (bf->sdb_addrinfo, offset_ptr, fileline, 0);
 		sdb_set (bf->sdb_addrinfo, fileline, offset_ptr, 0);
 		free (fileline);
-
-		RBinDwarfRow *rbindwardrow = R_NEW0 (RBinDwarfRow);
+#endif
+#if 1
+		RBinDbgItem item = {
+			.addr = pos->address + paddr,
+			.file = source_file,
+			.line = pos->line,
+		};
+		bf->addrline.al_add (&bf->addrline, item);
+#endif
+#if 0
+		RBinDbgItem *rbindwardrow = R_NEW0 (RBinDbgItem);
 		if (!rbindwardrow) {
 			dex->dexdump = false;
 			break;
 		}
 		rbindwardrow->file = strdup (source_file);
-		rbindwardrow->address = pos->address;
+		rbindwardrow->addr = pos->address;
 		rbindwardrow->line = pos->line;
 		r_list_append (dex->lines_list, rbindwardrow);
+#endif
 	}
 	if (!dex->dexdump) {
 		goto beach;
@@ -2115,10 +2126,12 @@ static ut64 size(RBinFile *bf) {
 	return off + r_read_le32 (u32s);
 }
 
+#if 0
 static R_BORROW RList *lines(RBinFile *bf) {
 	struct r_bin_dex_obj_t *dex = bf->bo->bin_obj;
 	return dex->lines_list;
 }
+#endif
 
 // iH*
 static RList *dex_fields(RBinFile *bf) {
@@ -2242,7 +2255,7 @@ RBinPlugin r_bin_plugin_dex = {
 	.get_offset = &getoffset,
 	.get_name = &getname,
 	.dbginfo = &r_bin_dbginfo_dex,
-	.lines = &lines,
+	// .lines = &lines,
 };
 
 #ifndef R2_PLUGIN_INCORE

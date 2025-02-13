@@ -4,8 +4,10 @@
 
 R_API R_NULLABLE RUStrpool* r_ustrpool_new(void) {
 	RUStrpool *p = R_NEW0 (RUStrpool);
-	p->size = 1024;
+	p->size = 128;
+	p->isize = 16;
 	p->str = malloc (p->size);
+	p->idxs = calloc (sizeof (p->idxs[0]), p->isize); 
 	if (p->str) {
 		p->str[0] = 0;
 		p->bloom = r_bloom_new (1024, 2, NULL);
@@ -47,6 +49,20 @@ static char *strpool_alloc(RUStrpool *p, int l) {
 	return ret;
 }
 
+static bool strpool_resize_count(RUStrpool *p) {
+	if (p->count + 8 < p->isize) {
+		const size_t ns = p->isize + 32;
+		ut32 *ni = realloc (p->idxs, ns);
+		if (ni) {
+			p->idxs = ni;
+			p->isize += ns;
+		} else {
+			return false;
+		}
+	}
+	return true;
+}
+
 // must be internal imho, we store strings not bytes. must be always nul terminated. or just rename to append_n
 static int strpool_memcat(RUStrpool *p, const char *s, int len) {
 	char *ptr = strpool_alloc (p, len);
@@ -76,6 +92,7 @@ R_API int r_ustrpool_append(RUStrpool *p, const char *s) {
 	r_bloom_add (p->bloom, s, l);
 	p->idxs[p->count] = idx;
 	p->count++;
+	strpool_resize_count (p);
 	return idx;
 }
 

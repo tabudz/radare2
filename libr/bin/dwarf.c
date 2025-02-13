@@ -2721,23 +2721,20 @@ cleanup:
 	return NULL;
 }
 
-static RBinDwarfRow *row_new(ut64 addr, const char *file, int line, int col) {
+static RBinDbgItem *row_new(ut64 addr, const char *file, int line, int col) {
 	R_RETURN_VAL_IF_FAIL (file, NULL);
-	RBinDwarfRow *row = R_NEW0 (RBinDwarfRow);
-	if (R_LIKELY (row)) {
-		row->file = strdup (file);
-		row->address = addr;
-		row->line = line;
-		row->column = col;
-	}
+	RBinDbgItem *row = R_NEW0 (RBinDbgItem);
+	row->file = strdup (file);
+	row->addr = addr;
+	row->line = line;
+	row->column = col;
 	return row;
 }
 
 static void row_free(void *p) {
 	if (p) {
-		RBinDwarfRow *row = (RBinDwarfRow*)p;
-		free (row->file);
-		free (row);
+		RBinDbgItem *row = (RBinDbgItem *)p;
+		r_bin_dbgitem_free (row);
 	}
 }
 
@@ -2795,7 +2792,7 @@ R_API RList *r_bin_dwarf_parse_line(RBin *bin, int mode) {
 						column = atoi (tok2 + 1);
 					}
 					ut64 addr = r_num_get (NULL, key);
-					RBinDwarfRow *row = row_new (addr, file, line, column);
+					RBinDbgItem *row = row_new (addr, file, line, column);
 					if (row) {
 						r_list_append (list, row);
 					}

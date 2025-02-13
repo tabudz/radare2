@@ -1,4 +1,4 @@
-/* radare - LGPL - Copyright 2009-2024 - nibble, pancake */
+/* radare - LGPL - Copyright 2009-2025 - nibble, pancake */
 
 #include <r_bin.h>
 
@@ -7,20 +7,28 @@
 // R2R db/perf/dex
 // R2R db/cmd/lea_intel
 
-// R2_600 - make this api public -- see row_free in dwarf.c
-static void r_bin_dbgitem_free(RBinDbgItem *di) {
-	if (di) {
-		free (di->file);
-		free (di);
-	}
+#if 0
+R_API RBinDbgItem *r_bin_dbgitem_at(RBin *bin, ut64 addr) {
+R_API bool r_bin_addr2line(RBin *bin, ut64 addr, char *file, int len, int *line, int *column) {
+R_API R_NULLABLE char *r_bin_addr2text(RBin *bin, ut64 addr, int origin) {
+R_API char *r_bin_addr2fileline(RBin *bin, ut64 addr) {
+#endif
+
+R_API void r_bin_dbgitem_free(RBinDbgItem *di) {
+	free (di);
 }
 
 R_API RBinDbgItem *r_bin_dbgitem_at(RBin *bin, ut64 addr) {
+	if (bin->cur && bin->cur->addrline.storage) {
+		RBinAddrLineStore *als = &bin->cur->addrline;
+		return als->al_get (als, addr);
+	}
+	// R2_600 - eprintf ("OLDPATH\n");
 	r_strf_var (key, 64, "0x%"PFMT64x, addr); // TODO: use sdb_itoa because its faster
 	char *data = sdb_get (bin->cur->sdb_addrinfo, key, 0);
 	if (data) {
 		RBinDbgItem *di = R_NEW0 (RBinDbgItem);
-		di->address = addr;
+		di->addr = addr;
 		// 0xaddr=file.c|line:column
 		char *token = strchr (data, '|');
 		if (!token) {
@@ -64,10 +72,28 @@ static bool addr2line_from_sdb(RBin *bin, ut64 addr, char *file, int len, int *l
 	return false;
 }
 
-// XXX R2_600 - this api must return a struct instead of pa
-// R_API RBinDwarfRow *r_bin_addr2line(RBin *bin, ut64 addr) {}
+// XXX R2_600 - this api must return a struct instead of pa -- or just deprecate it
 R_API bool r_bin_addr2line(RBin *bin, ut64 addr, char *file, int len, int *line, int *column) {
 	R_RETURN_VAL_IF_FAIL (bin, false);
+
+	if (bin->cur && bin->cur->addrline.storage) {
+		RBinAddrLineStore *als = &bin->cur->addrline;
+		eprintf ("Hander2\n");
+		RBinDbgItem *item = als->al_get (als, addr);
+		if (item) {
+			// TODO: honor path
+			r_str_ncpy (file, item->file, len);
+			if (line) {
+				*line = item->line;
+			}
+			if (column) {
+				*column = item->column;
+			}
+			r_bin_dbgitem_free (item);
+		}
+		return true;
+	}
+
 	RBinFile *binfile = r_bin_cur (bin);
 	RBinObject *o = r_bin_cur_object (bin);
 	RBinPlugin *cp = r_bin_file_cur_plugin (binfile);
@@ -102,7 +128,7 @@ static RBinDbgItem *r_bin_dbgitem_api(RBin *bin, ut64 addr) {
 			if (cp->dbginfo->get_line (bin->cur, addr, file, len, &line, &column)) {
 				RBinDbgItem *di = R_NEW0 (RBinDbgItem);
 				di->file = strdup (file);
-				di->address = addr;
+				di->addr = addr;
 				di->line = line;
 				di->column = column;
 				return di;
@@ -195,6 +221,7 @@ R_API char *r_bin_addr2fileline(RBin *bin, ut64 addr) {
 	char file[1024];
 	int line = 0;
 	int colu = -1;
+	eprintf ("PENE\n");
 	if (r_bin_addr2line (bin, addr, file, sizeof (file) - 1, &line, &colu)) {
 		const char *file_nopath = r_file_basename (file);
 		if (colu > 0) {
@@ -202,5 +229,16 @@ R_API char *r_bin_addr2fileline(RBin *bin, ut64 addr) {
 		}
 		return r_str_newf ("%s:%d", file_nopath, line);
 	}
+	return NULL;
+}
+
+R_API void r_bin_addr2line_add(RBin *bin, ut64 addr, RBinDbgItem item) {
+	eprintf ("ADD LINE\n");
+	// const char *file, int line, int column) {
+}
+
+R_API RBinDbgItem *r_bin_addr2line_get(RBin *bin, ut64 addr) {
+	eprintf ("GET LINE\n");
+	// const char *file, int line, int column) {
 	return NULL;
 }
