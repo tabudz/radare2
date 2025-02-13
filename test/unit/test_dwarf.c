@@ -25,13 +25,13 @@
 	mu_assert_eq (da->decls[i].defs[j].attr_form, expected_form, "Incorrect children flag");
 
 /**
- * @brief Comparator to sort list of line statements by address(collection of DwarfRows)
+ * @brief Comparator to sort list of line statements by address(collection of DbgItem)
  */
 int row_comparator(const void *a, const void *b){
-	const RBinDwarfRow *left = a;
-	const RBinDwarfRow *right = b;
+	const RBinDbgItem *left = a;
+	const RBinDbgItem *right = b;
 
-	return (left->address >= right->address) ? 1 : -1;
+	return (left->addr >= right->addr) ? 1 : -1;
 }
 
 int int_compare(const void *a, const void *b){
@@ -131,7 +131,7 @@ bool test_dwarf3_c_basic(void) { // this should work for dwarf2 as well
 	RList *line_list = r_bin_dwarf_parse_line (bin, MODE);
 	mu_assert_eq (r_list_length (line_list), 8, "Amount of line information parse doesn't match");
 
-	RBinDwarfRow *row;
+	RBinDbgItem *row;
 	RListIter *iter;
 
 	// sort it so it can be more consistently tested?
@@ -150,7 +150,7 @@ bool test_dwarf3_c_basic(void) { // this should work for dwarf2 as well
 	};
 	i = 0;
 	r_list_foreach (line_list, iter, row) {
-		mu_assert_eq (row->address, test_addresses[i++], "Line number statement address doesn't match");
+		mu_assert_eq (row->addr, test_addresses[i++], "Line number statement address doesn't match");
 	}
 
 	r_list_free (line_list);
@@ -486,7 +486,7 @@ bool test_dwarf3_cpp_basic(void) { // this should work for dwarf2 as well
 	RList *line_list = r_bin_dwarf_parse_line (bin, MODE);
 	mu_assert_eq (r_list_length (line_list), 60, "Amount of line information parse doesn't match");
 
-	RBinDwarfRow *row;
+	RBinDbgItem *row;
 	RListIter *iter;
 
 	// sort it so it can be more consistently tested?
@@ -559,7 +559,7 @@ bool test_dwarf3_cpp_basic(void) { // this should work for dwarf2 as well
 	i = 0;
 
 	r_list_foreach (line_list, iter, row) {
-		mu_assert_eq (row->address, test_addresses[i++], "Line number statement address doesn't match");
+		mu_assert_eq (row->addr, test_addresses[i++], "Line number statement address doesn't match");
 	}
 
 	r_list_free (line_list);
@@ -598,7 +598,7 @@ bool test_dwarf3_cpp_many_comp_units(void) {
 	RList *line_list = r_bin_dwarf_parse_line (bin, MODE);
 	mu_assert_eq (r_list_length (line_list), 64, "Amount of line information parse doesn't match");
 
-	RBinDwarfRow *row;
+	RBinDbgItem *row;
 	RListIter *iter;
 
 	// sort it so it can be more consistently tested?
@@ -675,7 +675,7 @@ bool test_dwarf3_cpp_many_comp_units(void) {
 	i = 0;
 
 	r_list_foreach (line_list, iter, row) {
-		mu_assert_eq (row->address, test_addresses[i++], "Line number statement address doesn't match");
+		mu_assert_eq (row->addr, test_addresses[i++], "Line number statement address doesn't match");
 	}
 
 	r_list_free (line_list);
@@ -705,7 +705,7 @@ bool test_dwarf_cpp_empty_line_info(void) { // this should work for dwarf2 as we
 	RList *line_list = r_bin_dwarf_parse_line (bin, MODE);
 	mu_assert_eq (r_list_length (line_list), 771, "Amount of line information parse doesn't match");
 
-	RBinDwarfRow *row;
+	RBinDbgItem *row;
 	RListIter *iter;
 
 	// sort it so it can be more consistently tested?
@@ -740,7 +740,7 @@ bool test_dwarf_cpp_empty_line_info(void) { // this should work for dwarf2 as we
 	int i = 0;
 
 	r_list_foreach (line_list, iter, row) {
-		mu_assert_eq (row->address, test_addresses[i++], "Line number statement address doesn't match");
+		mu_assert_eq (row->addr, test_addresses[i++], "Line number statement address doesn't match");
 		if (i == 23)
 			break;
 	}
@@ -783,7 +783,7 @@ bool test_dwarf2_cpp_many_comp_units(void) {
 	RList *line_list = r_bin_dwarf_parse_line (bin, MODE);
 	mu_assert_eq (r_list_length (line_list), 64, "Amount of line information parse doesn't match");
 
-	RBinDwarfRow *row;
+	RBinDbgItem *row;
 	RListIter *iter;
 
 	r_list_sort (line_list, row_comparator);
@@ -857,7 +857,7 @@ bool test_dwarf2_cpp_many_comp_units(void) {
 
 	i = 0;
 	r_list_foreach (line_list, iter, row) {
-		mu_assert_eq (row->address, test_addresses[i++], "Line number statement address doesn't match");
+		mu_assert_eq (row->addr, test_addresses[i++], "Line number statement address doesn't match");
 	}
 
 	// add line information check
@@ -882,7 +882,7 @@ bool test_dwarf4_cpp_many_comp_units(void) {
 	RList *line_list = r_bin_dwarf_parse_line (bin, MODE);
 	mu_assert_eq (r_list_length (line_list), 75, "Amount of line information parse doesn't match");
 
-	RBinDwarfRow *row;
+	RBinDbgItem *row;
 	RListIter *iter;
 
 	r_list_sort (line_list, row_comparator);
@@ -967,7 +967,7 @@ bool test_dwarf4_cpp_many_comp_units(void) {
 
 	int i = 0;
 	r_list_foreach (line_list, iter, row) {
-		mu_assert_eq (row->address, test_addresses[i++], "Line number statement address doesn't match");
+		mu_assert_eq (row->addr, test_addresses[i++], "Line number statement address doesn't match");
 	}
 
 	r_list_free (line_list);
@@ -988,7 +988,7 @@ bool test_big_endian_dwarf2(void) {
 	RList *line_list = r_bin_dwarf_parse_line (bin, MODE);
 	mu_assert_eq (r_list_length (line_list), 273, "Amount of line information parse doesn't match");
 
-	RBinDwarfRow *row;
+	RBinDbgItem *row;
 	RListIter *iter;
 
 	r_list_sort (line_list, row_comparator);
@@ -1271,7 +1271,7 @@ bool test_big_endian_dwarf2(void) {
 
 	int i = 0;
 	r_list_foreach (line_list, iter, row) {
-		mu_assert_eq (row->address, test_addresses[i++], "Line number statement address doesn't match");
+		mu_assert_eq (row->addr, test_addresses[i++], "Line number statement address doesn't match");
 	}
 
 	r_list_free (line_list);
