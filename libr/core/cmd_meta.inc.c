@@ -480,7 +480,6 @@ retry:
 		fs.fscache = sdb_new0 ();
 		PJ *pj = NULL;
 		RBinFile *bf = r_bin_cur (core->bin);
-		eprintf ("CARABA\n");
 		if (use_json) {
 			pj = r_core_pj_new (core);
 			fs.pj = pj;
