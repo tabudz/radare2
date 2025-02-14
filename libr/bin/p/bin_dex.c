@@ -372,7 +372,6 @@ static void dex_parse_debug_item(RBinFile *bf, RBinDexClass *c, int MI, int MA, 
 	ut64 param_type_idx;
 	ut16 argReg = regsz - ins_size;
 	ut64 source_file_idx = c->source_file;
-	RList *params, *debug_positions, *emitted_debug_locals = NULL;
 	bool keep = true;
 	if (argReg > regsz) {
 		return; // this return breaks tests
@@ -392,13 +391,8 @@ static void dex_parse_debug_item(RBinFile *bf, RBinDexClass *c, int MI, int MA, 
 	// The state machine consists of five registers
 	ut32 address = 0;
 	ut32 line = line_start;
-	if (!(debug_positions = r_list_newf ((RListFree)free))) {
-		return;
-	}
-	if (!(emitted_debug_locals = r_list_newf ((RListFree)free))) {
-		free (debug_positions);
-		return;
-	}
+	RList *debug_positions = r_list_newf ((RListFree)free);
+	RList *emitted_debug_locals = r_list_newf ((RListFree)free);
 
 	struct dex_debug_local_t *debug_locals = calloc (sizeof (struct dex_debug_local_t), regsz + 1);
 	if (!(MA & 0x0008)) {
@@ -409,9 +403,7 @@ static void dex_parse_debug_item(RBinFile *bf, RBinDexClass *c, int MI, int MA, 
 		debug_locals[argReg].live = true;
 		argReg++;
 	}
-	if (!(params = dex_method_signature2 (dex, MI))) {
-		goto beach;
-	}
+	RList *params = dex_method_signature2 (dex, MI);
 
 	RListIter *iter;
 	const char *name;
@@ -437,7 +429,7 @@ static void dex_parse_debug_item(RBinFile *bf, RBinDexClass *c, int MI, int MA, 
 			argReg += 1;
 			break;
 		}
-		if (!name || !*name) {
+		if (R_STR_ISEMPTY (name)) {
 			debug_locals[reg].name = name;
 			debug_locals[reg].descriptor = type;
 			debug_locals[reg].signature = NULL;
@@ -613,12 +605,20 @@ static void dex_parse_debug_item(RBinFile *bf, RBinDexClass *c, int MI, int MA, 
 				int line_delta = DBG_LINE_BASE + (adjusted_opcode % DBG_LINE_RANGE);
 				address += addr_delta;
 				line += line_delta;
-				struct dex_debug_position_t *position =
-					R_NEW0 (struct dex_debug_position_t);
-				position->source_file_idx = source_file_idx;
-				position->address = address;
-				position->line = line;
-				r_list_append (debug_positions, position);
+				if (dex->dexdump) {
+					struct dex_debug_position_t *position =
+						R_NEW0 (struct dex_debug_position_t);
+					position->source_file_idx = source_file_idx;
+					position->address = address;
+					position->line = line;
+					r_list_append (debug_positions, position);
+				}
+				RBinDbgItem item = {
+					.addr = address + paddr,
+					.file = getstr (dex, source_file_idx),
+					.line = line,
+				};
+				bf->addrline.al_add (&bf->addrline, item);
 			} else {
 				R_LOG_ERROR ("unknown dex debug opcode: 0x%02x", opcode);
 			}
@@ -629,60 +629,6 @@ static void dex_parse_debug_item(RBinFile *bf, RBinDexClass *c, int MI, int MA, 
 		}
 	}
 
-	if (!bf->sdb_addrinfo) {
-		bf->sdb_addrinfo = sdb_new0 ();
-	}
-
-	RListIter *iter1;
-	struct dex_debug_position_t *pos;
-	// Loading the debug info takes too much time and nobody uses this afaik
-	// 0.5s of 5s is spent in this loop
-	ut64 old_source_file_idx = -1;
-	const char *source_file = NULL;
-	r_list_foreach (debug_positions, iter1, pos) {
-		if (old_source_file_idx != pos->source_file_idx) {
-			const char *sf = getstr (dex, pos->source_file_idx);
-			if (sf) {
-#if 0
-				if (r_str_endswith (sf, "SourceFile")) {
-					sf = bf->file;
-				}
-#endif
-				old_source_file_idx = pos->source_file_idx;
-				source_file = sf;
-			}
-		}
-		if (R_STR_ISEMPTY (source_file)) {
-			continue;
-		}
-#if 0
-		char offset[SDB_NUM_BUFSZ] = {0};
-		char *fileline = r_str_newf ("%s|%"PFMT64d, source_file, pos->line);
-		char *offset_ptr = sdb_itoa (pos->address + paddr, 16, offset, sizeof (offset));
-		sdb_set (bf->sdb_addrinfo, offset_ptr, fileline, 0);
-		sdb_set (bf->sdb_addrinfo, fileline, offset_ptr, 0);
-		free (fileline);
-#endif
-#if 1
-		RBinDbgItem item = {
-			.addr = pos->address + paddr,
-			.file = source_file,
-			.line = pos->line,
-		};
-		bf->addrline.al_add (&bf->addrline, item);
-#endif
-#if 0
-		RBinDbgItem *rbindwardrow = R_NEW0 (RBinDbgItem);
-		if (!rbindwardrow) {
-			dex->dexdump = false;
-			break;
-		}
-		rbindwardrow->file = strdup (source_file);
-		rbindwardrow->addr = pos->address;
-		rbindwardrow->line = pos->line;
-		r_list_append (dex->lines_list, rbindwardrow);
-#endif
-	}
 	if (!dex->dexdump) {
 		goto beach;
 	}
@@ -2254,7 +2200,7 @@ RBinPlugin r_bin_plugin_dex = {
 	.size = &size,
 	.get_offset = &getoffset,
 	.get_name = &getname,
-	.dbginfo = &r_bin_dbginfo_dex,
+//	.dbginfo = &r_bin_dbginfo_dex,
 	// .lines = &lines,
 };
 

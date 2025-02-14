@@ -22,10 +22,6 @@ r_bin_sources = [
   'p/bin_cgc.c',
   'p/bin_coff.c',
   'p/bin_off.c', # goff ibm
-  'p/bin_dbginfo_dex.c',
-  'p/bin_dbginfo_elf.c',
-  'p/bin_dbginfo_elf64.c',
-  'p/bin_dbginfo_p9.c',
   'p/bin_dex.c',
   'p/bin_dis.c',
   'p/bin_dmp64.c',
