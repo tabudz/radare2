@@ -1,4 +1,4 @@
-/* radare - LGPL - Copyright 2009-2024 - pancake */
+/* radare - LGPL - Copyright 2009-2025 - pancake */
 
 #ifndef R2_BIN_H
 #define R2_BIN_H
@@ -398,6 +398,8 @@ typedef RBinDbgItem* (*RBinAddrLineGet)(RBinAddrLineStore *bin, ut64 addr);
 typedef void (*RBinAddrLineReset)(RBinAddrLineStore *bin);
 typedef void (*RBinAddrLineResetAt)(RBinAddrLineStore *bin, ut64 addr);
 typedef void (*RBinAddrLineDel)(RBinAddrLineStore *bin, ut64 addr);
+typedef bool (*RBinDbgInfoCallback)(void *user, RBinDbgItem *item);
+typedef void (*RBinAddrLineForeach)(RBinAddrLineStore *bin, RBinDbgInfoCallback cb, void *user);
 
 struct r_bin_addrline_store_t {
 	bool used; // deprecated when finished
@@ -406,7 +408,8 @@ struct r_bin_addrline_store_t {
 	RBinAddrLineGet al_get;
 	RBinAddrLineDel al_del;
 	RBinAddrLineReset al_reset;
-	RBinAddrLineResetAt al_reset_at;
+	// RBinAddrLineResetAt al_reset_at;
+	RBinAddrLineForeach al_foreach;
 };
 
 // XXX: RBinFile may hold more than one RBinObject?
@@ -912,6 +915,7 @@ R_API RBinSection *r_bin_get_section_at(RBinObject *o, ut64 off, int va);
 // R2_600 - refactor and optimize storage
 R_API void r_bin_dbginfo_reset(RBin *bin);
 R_API void r_bin_dbginfo_reset_at(RBin *bin, ut64 addr);
+R_API void r_bin_dbginfo_foreach(RBin *bin, RBinDbgInfoCallback item, void *user);
 R_API RBinDbgItem *r_bin_dbgitem_at(RBin *bin, ut64 addr);
 R_API void r_bin_dbgitem_free(RBinDbgItem *di);
 R_API bool r_bin_addr2line(RBin *bin, ut64 addr, char *file, int len, int *line, int *column);

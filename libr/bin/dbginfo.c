@@ -29,6 +29,7 @@ R_API void r_bin_dbgitem_reset(RBin *bin) {
 }
 
 // must be tied to the rbinfile
+// R2_600 - rename dbginfo to addrline
 R_API void r_bin_dbginfo_reset(RBin *bin) {
 	if (bin->cur) {
 	       	if (bin->cur->addrline.used) {
@@ -57,19 +58,12 @@ R_API void r_bin_dbginfo_reset_at(RBin *bin, ut64 addr) {
 	sdb_unset (bin->cur->sdb_addrinfo, aoffsetptr, 0);
 }
 
-R_API void r_bin_dbginfo_foreach(RBin *bin, void*cb, void *user) {
+R_API void r_bin_dbginfo_foreach(RBin *bin, RBinDbgInfoCallback cb, void *user) {
 	if (bin->cur && bin->cur->addrline.used) {
-#if 0
-		// XXX TODO
 		RBinAddrLineStore *als = &bin->cur->addrline;
-		RListIter *iter;
-		RBinDbgItem *item;
-		r_list_foreach (als, iter, item) {
-			cb (user, k, v);
-		}
-#endif
+		als->al_foreach (als, cb, user);
 	} else {
-		sdb_foreach (bin->cur->sdb_addrinfo, cb, user);
+		R_LOG_ERROR ("Callback is not matching");
 	}
 }
 
@@ -146,8 +140,9 @@ R_API bool r_bin_addr2line(RBin *bin, ut64 addr, char *file, int len, int *line,
 				*column = item->column;
 			}
 			r_bin_dbgitem_free (item);
+			return true;
 		}
-		return true;
+		return false;
 	}
 
 	RBinFile *binfile = r_bin_cur (bin);

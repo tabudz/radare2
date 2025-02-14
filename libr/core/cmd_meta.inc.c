@@ -259,41 +259,27 @@ static bool print_addrinfo_json(void *user, const char *k, const char *v) {
 	return true;
 }
 
-static bool print_addrinfo_new(void *user, const char *k, const char *v) {
+static bool print_addrinfo2(void *user, RBinDbgItem *item) {
 	FilterStruct *fs = (FilterStruct*)user;
-	ut64 offset = sdb_atoi (k);
+	ut64 offset = item->addr;
 	if (!offset || offset == UT64_MAX) {
 		return true;
 	}
-	char *subst = strdup (v);
-	char *colonpos = strchr (subst, '|');
-	if (!colonpos) {
-		colonpos = strchr (subst, ':'); // : for shell and | for db.. imho : everywhere
-	}
-	if (!colonpos) {
-		r_cons_printf ("%s\n", subst);
-	} else if (fs->filter_offset == UT64_MAX || fs->filter_offset == offset) {
+	if (fs->filter_offset == UT64_MAX || fs->filter_offset == offset) {
 		if (fs->filter_format) {
-			*colonpos = ':';
-			r_cons_printf ("'CL %s %s\n", k, subst);
+			// TODO add column if defined
+			r_cons_printf ("'CL 0x%08"PFMT64x" %s:%d\n", item->addr, item->file, item->line);
 		} else {
-			*colonpos++ = 0;
-			int line = atoi (colonpos);
-			int colu = 0;
-			char *columnpos = strchr (colonpos, '|');
-			if (columnpos) {
-				*columnpos ++ = 0;
-				colu = atoi (columnpos);
-			}
 			r_cons_printf ("file: %s\nline: %d\ncolu: %d\naddr: 0x%08"PFMT64x"\n",
-				subst, line, colu, offset);
+				item->file, item->line, item->column, item->addr);
 		}
 		fs->filter_count++;
 	}
-	free (subst);
+	// TODO: return false if filter_offset is found ?
 
 	return true;
 }
+
 // R2_600 - DEPRECATE
 static bool print_addrinfo(void *user, const char *k, const char *v) {
 	FilterStruct *fs = (FilterStruct*)user;
@@ -442,8 +428,11 @@ retry:
 		if (remove) {
 			r_bin_dbginfo_reset (core->bin);
 		} else {
-			// r_bin_dbginfo_foreach (core->bin, print_addrinfo, &fs);
-			sdb_foreach (core->bin->cur->sdb_addrinfo, print_addrinfo, &fs);
+			if (core->bin->cur && core->bin->cur->addrline.used) {
+				r_bin_dbginfo_foreach (core->bin, print_addrinfo2, &fs);
+			} else {
+				sdb_foreach (core->bin->cur->sdb_addrinfo, print_addrinfo, &fs);
+			}
 		}
 		return 0;
 	}

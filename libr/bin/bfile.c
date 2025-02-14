@@ -550,11 +550,37 @@ static void al_reset(RBinAddrLineStore *als) {
 	store->pool = r_ustrpool_new ();
 }
 
+static RBinDbgItem* dbgitem_from_internal(RBinAddrLineStore *als, RBinDbgItemInternal *item) {
+	AddrLineStore *store = als->storage;
+	RBinDbgItem *di = R_NEW0 (RBinDbgItem);
+	di->addr = item->addr;
+	di->line = item->line;
+	di->column = item->colu;
+	di->file = r_ustrpool_get_nth (store->pool, item->file);
+	di->path = r_ustrpool_get_nth (store->pool, item->path);
+	return di;
+}
+
+static void al_foreach(RBinAddrLineStore *als, RBinDbgInfoCallback cb, void *user) {
+	AddrLineStore *store = als->storage;
+
+	RListIter *iter;
+	RBinDbgItemInternal *item;
+	r_list_foreach (store->list, iter, item) {
+		RBinDbgItem *di = dbgitem_from_internal (als, item);
+		bool go_on = cb (user, di);
+		r_bin_dbgitem_free (di);
+		if (!go_on) {
+			break;
+		}
+	}
+}
+
 static void al_del(RBinAddrLineStore *als, ut64 addr) {
 	AddrLineStore *store = als->storage;
 
 	RListIter *iter;
-	RBinDbgItem *item;
+	RBinDbgItemInternal *item;
 	r_list_foreach (store->list, iter, item) {
 		if (item->addr == addr) {
 			r_list_delete (store->list, iter);
@@ -562,6 +588,7 @@ static void al_del(RBinAddrLineStore *als, ut64 addr) {
 		}
 	}
 }
+
 static RBinDbgItem* al_get(RBinAddrLineStore *als, ut64 addr) {
 	AddrLineStore *store = als->storage;
 	RListIter *iter;
@@ -569,13 +596,7 @@ static RBinDbgItem* al_get(RBinAddrLineStore *als, ut64 addr) {
 	R_LOG_DEBUG ("ITEMS %d / %d", store->pool->count, r_list_length (store->list));
 	r_list_foreach (store->list, iter, item) {
 		if (item->addr == addr) {
-			RBinDbgItem *di = R_NEW0 (RBinDbgItem);
-			di->addr = addr;
-			di->line = item->line;
-			di->column = item->colu;
-			di->file = r_ustrpool_get_nth (store->pool, item->file);
-			di->path = r_ustrpool_get_nth (store->pool, item->path);
-			return di;
+			return dbgitem_from_internal (als, item);
 		}
 	}
 	return NULL;
@@ -590,6 +611,8 @@ static void addrline_store_init(RBinAddrLineStore *b) {
 	b->al_get = al_get;
 	b->al_del = al_del;
 	b->al_reset = al_reset;
+	// b->al_reset_at = al_reset_at;
+	b->al_foreach = al_foreach;
 }
 
 static void addrline_store_fini(RBinAddrLineStore *als) {
