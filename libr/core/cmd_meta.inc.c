@@ -259,6 +259,56 @@ static bool print_addrinfo_json(void *user, const char *k, const char *v) {
 	return true;
 }
 
+static bool print_addrinfo2_json(void *user, RBinDbgItem *item) {
+	FilterStruct *fs = (FilterStruct *)user;
+	ut64 offset = item->addr;
+	if (!offset || offset == UT64_MAX) {
+		return true;
+	}
+#if 0
+	if (colonpos && (fs->filter_offset == UT64_MAX || fs->filter_offset == offset)) {
+		if (fs->filter_format) {
+			*colonpos = ':';
+	//		r_cons_printf ("CL %s %s\n", k, subst);
+		} else {
+			*colonpos = 0;
+	//		r_cons_printf ("file: %s\nline: %s\naddr: 0x%08"PFMT64x"\n", subst, colonpos + 1, offset);
+		}
+		fs->filter_count++;
+	}
+#endif
+	const char *file = item->file;
+	int line = item->line;
+	PJ *pj = fs->pj;
+	if (pj) {
+		pj_o (pj);
+		pj_ks (pj, "file", item->file);
+		pj_kn (pj, "line", item->line);
+		if (item->column > 0) {
+			pj_kn (pj, "column", item->column);
+		}
+		pj_kn (pj, "addr", item->addr);
+		const char *cached_existance = sdb_const_get (fs->fscache, file, NULL);
+		bool file_exists = false;
+		if (cached_existance) {
+			file_exists = !strcmp (cached_existance, "1");
+		} else {
+			if (r_file_exists (file)) {
+				sdb_set (fs->fscache, file, "1", 0);
+			} else {
+				sdb_set (fs->fscache, file, "0", 0);
+			}
+		}
+		if (file_exists) {
+			char *row = r_file_slurp_line (file, line, 0);
+			pj_ks (pj, "text", file);
+			free (row);
+		}
+		pj_end (pj);
+	}
+	return true;
+}
+
 static bool print_addrinfo2(void *user, RBinDbgItem *item) {
 	FilterStruct *fs = (FilterStruct*)user;
 	ut64 offset = item->addr;
@@ -486,10 +536,12 @@ retry:
 			pj_a (pj);
 			if (bf && bf->sdb_addrinfo) {
 				sdb_foreach (bf->sdb_addrinfo, print_addrinfo_json, &fs);
+				r_bin_dbginfo_foreach (core->bin, print_addrinfo2_json, &fs);
 			}
 		} else {
 			if (bf && bf->sdb_addrinfo) {
 				sdb_foreach (bf->sdb_addrinfo, print_addrinfo, &fs);
+				r_bin_dbginfo_foreach (core->bin, print_addrinfo2, &fs);
 			}
 		}
 		if (fs.filter_count == 0) {

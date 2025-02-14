@@ -557,7 +557,13 @@ static RBinDbgItem* dbgitem_from_internal(RBinAddrLineStore *als, RBinDbgItemInt
 	di->line = item->line;
 	di->column = item->colu;
 	di->file = r_ustrpool_get_nth (store->pool, item->file);
+	if (!di->file) {
+		di->file = "?";
+	}
 	di->path = r_ustrpool_get_nth (store->pool, item->path);
+	if (!di->path) {
+		di->path = "?";
+	}
 	return di;
 }
 
