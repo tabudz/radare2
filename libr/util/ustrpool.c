@@ -93,6 +93,7 @@ R_API int r_ustrpool_append(RUStrpool *p, const char *s) {
 	p->idxs[p->count] = idx;
 	p->count++;
 	strpool_resize_count (p);
+	return pos;
 	return idx;
 }
 
@@ -121,7 +122,7 @@ R_API int r_ustrpool_get(RUStrpool *p, const char *w) {
 	int i;
 	// XXX this is O(n) - must be optimized with an skiparray or hashtable
 	for (i = 0; i < p->count; i++) {
-		char *v = r_ustrpool_get_nth (p, i);
+		const char *v = r_ustrpool_get_nth (p, i);
 		if (!strcmp (v, w)) {
 			return i;
 		}
