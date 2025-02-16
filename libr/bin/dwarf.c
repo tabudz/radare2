@@ -1156,7 +1156,17 @@ static const ut8 *parse_line_header(RBin *bin, RBinFile *bf, const ut8 *buf, con
 	return buf;
 }
 
-static inline void add_sdb_addrline(Sdb *s, ut64 addr, const char *file, ut64 line, ut64 column, int mode, PrintfCallback print) {
+static inline void add_sdb_addrline(RBinFile *bf, ut64 addr, const char *file, ut64 line, ut64 column, int mode, PrintfCallback print) {
+#if 1
+	RBinDbgItem item = {
+		.addr = addr,
+		.file = file,
+		.line = line,
+		.column = column,
+	};
+	bf->addrline.al_add (&bf->addrline, item);
+#else
+	Sdb *s = bf->sdb_addrinfo;
 	char offset[SDB_NUM_BUFSZ];
 	char *offset_ptr;
 	if (!s || R_STR_ISEMPTY (file)) {
@@ -1204,6 +1214,7 @@ static inline void add_sdb_addrline(Sdb *s, ut64 addr, const char *file, ut64 li
 	sdb_add (s, offset_ptr, fileline, 0);
 	sdb_add (s, fileline, offset_ptr, 0);
 	free (fileline);
+#endif
 }
 
 static const ut8 *parse_ext_opcode(RBin *bin, const ut8 *obuf, size_t len, const RBinDwarfLineHeader *hdr, RBinDwarfSMRegisters *regs, int mode) {
@@ -1238,7 +1249,7 @@ static const ut8 *parse_ext_opcode(RBin *bin, const ut8 *obuf, size_t len, const
 		if (binfile && binfile->sdb_addrinfo && hdr->file_names) {
 			int fnidx = regs->file;
 			if (fnidx >= 0 && fnidx < hdr->file_names_count) {
-				add_sdb_addrline (binfile->sdb_addrinfo, regs->address,
+				add_sdb_addrline (binfile, regs->address,
 						hdr->file_names[fnidx].name,
 						regs->line, regs->column, mode, print);
 			}
@@ -1331,7 +1342,7 @@ static const ut8 *parse_spec_opcode(
 	if (binfile && binfile->sdb_addrinfo && hdr->file_names) {
 		int idx = regs->file;
 		if (idx >= 0 && idx < hdr->file_names_count) {
-			add_sdb_addrline (binfile->sdb_addrinfo, regs->address,
+			add_sdb_addrline (binfile, regs->address,
 					hdr->file_names[idx].name,
 					regs->line, regs->column, mode, print);
 		}
@@ -1369,7 +1380,7 @@ static const ut8 *parse_std_opcode(RBin *bin, const ut8 *obuf, size_t len, const
 		if (binfile && binfile->sdb_addrinfo && hdr->file_names) {
 			int fnidx = regs->file;
 			if (fnidx >= 0 && fnidx < hdr->file_names_count) {
-				add_sdb_addrline (binfile->sdb_addrinfo,
+				add_sdb_addrline (binfile,
 					regs->address,
 					hdr->file_names[fnidx].name,
 					regs->line, regs->column, mode, print);

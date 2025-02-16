@@ -2,6 +2,7 @@
 
 #include <r_bin.h>
 
+// R2_600 - rename all dbginfo into 'addrline'
 // R2R db/formats/mangling/bin
 // R2R db/formats/dwarf
 // R2R db/perf/dex

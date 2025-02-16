@@ -1,6 +1,5 @@
-/* radare - LGPL - Copyright 2020 - mrmacete */
+/* radare - LGPL - Copyright 2020-2025 - mrmacete */
 
-#include <r_types.h>
 #include <r_util.h>
 #include <r_hash.h>
 #include "coresymbolication.h"
@@ -116,13 +115,25 @@ ut64 r_coresym_cache_element_pa2va(RCoreSymCacheElement *element, ut64 pa) {
 }
 
 static void meta_add_fileline(RBinFile *bf, ut64 vaddr, ut32 size, RCoreSymCacheElementFLC *flc) {
+	ut64 cursor = vaddr;
+	ut64 end = cursor + R_MAX (size, 1);
+#if 1
+	RBinDbgItem item = {
+		.addr = vaddr,
+		.file = flc->file,
+		.line = flc->line
+	};
+	while (cursor < end) {
+		item.addr += 2;
+		bf->addrline.al_add (&bf->addrline, item);
+		cursor += 2;
+	}
+#else
 	Sdb *s = bf->sdb_addrinfo;
 	if (!s) {
 		return;
 	}
 	char aoffset[SDB_NUM_BUFSZ];
-	ut64 cursor = vaddr;
-	ut64 end = cursor + R_MAX (size, 1);
 	char *fileline = r_str_newf ("%s:%d", flc->file, flc->line);
 	while (cursor < end) {
 		char *aoffsetptr = sdb_itoa (cursor, 16, aoffset, sizeof (aoffset));
@@ -134,6 +145,7 @@ static void meta_add_fileline(RBinFile *bf, ut64 vaddr, ut32 size, RCoreSymCache
 		cursor += 2;
 	}
 	free (fileline);
+#endif
 }
 
 static char *str_dup_safe(const ut8 *b, const ut8 *str, const ut8 *end) {

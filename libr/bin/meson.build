@@ -3,7 +3,7 @@ subdir('d')
 r_bin_sources = [
   'bin.c',
   'bin_write.c',
-  'dbginfo.c',
+  'addrline.c',
   'demangle.c',
   'dwarf.c',
   'blang.c',
