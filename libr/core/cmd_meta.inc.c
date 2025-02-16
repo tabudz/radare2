@@ -534,14 +534,12 @@ retry:
 			pj = r_core_pj_new (core);
 			fs.pj = pj;
 			pj_a (pj);
-			if (bf && bf->sdb_addrinfo) {
+			if (!r_bin_dbginfo_foreach (core->bin, print_addrinfo2_json, &fs)) {
 				sdb_foreach (bf->sdb_addrinfo, print_addrinfo_json, &fs);
-				r_bin_dbginfo_foreach (core->bin, print_addrinfo2_json, &fs);
 			}
 		} else {
-			if (bf && bf->sdb_addrinfo) {
+			if (!r_bin_dbginfo_foreach (core->bin, print_addrinfo2, &fs)) {
 				sdb_foreach (bf->sdb_addrinfo, print_addrinfo, &fs);
-				r_bin_dbginfo_foreach (core->bin, print_addrinfo2, &fs);
 			}
 		}
 		if (fs.filter_count == 0) {

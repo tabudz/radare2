@@ -2749,6 +2749,15 @@ static void row_free(void *p) {
 	}
 }
 
+static bool cb(void *user, RBinDbgItem *item) {
+	RList *list = (RList *)user;
+	RBinDbgItem *row = row_new (item->addr, item->file, item->line, item->column);
+	if (row) {
+		r_list_append (list, row);
+	}
+	return true;
+}
+
 R_API RList *r_bin_dwarf_parse_line(RBin *bin, int mode) {
 	R_RETURN_VAL_IF_FAIL (bin, NULL);
 	RList *list = NULL;
@@ -2771,14 +2780,11 @@ R_API RList *r_bin_dwarf_parse_line(RBin *bin, int mode) {
 			return NULL;
 		}
 		list = r_list_newf (row_free);
-		if (!list) {
-			free (buf);
-			return NULL;
-		}
 		/* set the endianity global [HOTFIX] */
 		// Actually parse the section
 		parse_line_raw (bin, buf, len, mode, be);
 		// k bin/cur/addrinfo/*
+#if 0
 		SdbListIter *iter;
 		SdbKv *kv;
 		SdbList *ls = sdb_foreach_list (bf->sdb_addrinfo, false);
@@ -2812,6 +2818,12 @@ R_API RList *r_bin_dwarf_parse_line(RBin *bin, int mode) {
 			}
 		}
 		ls_free (ls);
+#else
+		if (bin->cur && bin->cur->addrline.used) {
+			RBinAddrLineStore *als = &bin->cur->addrline;
+			als->al_foreach (als, cb, list);
+		}
+#endif
 		free (buf);
 	}
 	return list;

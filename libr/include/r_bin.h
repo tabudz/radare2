@@ -912,10 +912,10 @@ R_API const char *r_bin_get_meth_flag_string(ut64 flag, bool compact);
 R_API RBinSection *r_bin_get_section_at(RBinObject *o, ut64 off, int va);
 
 /* dbginfo.c */
-// R2_600 - refactor and optimize storage
+// R2_600 - refactor, rename and optimize storage
 R_API void r_bin_dbginfo_reset(RBin *bin);
 R_API void r_bin_dbginfo_reset_at(RBin *bin, ut64 addr);
-R_API void r_bin_dbginfo_foreach(RBin *bin, RBinDbgInfoCallback item, void *user);
+R_API bool r_bin_dbginfo_foreach(RBin *bin, RBinDbgInfoCallback item, void *user);
 R_API RBinDbgItem *r_bin_dbgitem_at(RBin *bin, ut64 addr);
 R_API void r_bin_dbgitem_free(RBinDbgItem *di);
 R_API bool r_bin_addr2line(RBin *bin, ut64 addr, char *file, int len, int *line, int *column);

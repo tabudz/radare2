@@ -59,13 +59,14 @@ R_API void r_bin_dbginfo_reset_at(RBin *bin, ut64 addr) {
 	sdb_unset (bin->cur->sdb_addrinfo, aoffsetptr, 0);
 }
 
-R_API void r_bin_dbginfo_foreach(RBin *bin, RBinDbgInfoCallback cb, void *user) {
+R_API bool r_bin_dbginfo_foreach(RBin *bin, RBinDbgInfoCallback cb, void *user) {
 	if (bin->cur && bin->cur->addrline.used) {
 		RBinAddrLineStore *als = &bin->cur->addrline;
 		als->al_foreach (als, cb, user);
-	} else {
-		R_LOG_ERROR ("Callback is not matching");
+		return true;
 	}
+	R_LOG_ERROR ("Callback is not matching");
+	return false;
 }
 
 R_API RBinDbgItem *r_bin_dbgitem_at(RBin *bin, ut64 addr) {
