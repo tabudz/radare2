@@ -2783,6 +2783,7 @@ R_API RList *r_bin_dwarf_parse_line(RBin *bin, int mode) {
 		/* set the endianity global [HOTFIX] */
 		// Actually parse the section
 		parse_line_raw (bin, buf, len, mode, be);
+r_bin_dbginfo_reset(bin);
 		// k bin/cur/addrinfo/*
 #if 0
 		SdbListIter *iter;
