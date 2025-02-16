@@ -532,8 +532,16 @@ typedef struct {
 static void al_add(RBinAddrLineStore *als, RBinDbgItem item) {
 	AddrLineStore *store = als->storage;
 	als->used = true;
+	RListIter *iter;
+	RBinDbgItemInternal *di;
+	/// XXX super slow but necessary
+	r_list_foreach (store->list, iter, di) {
+		if (item.addr == di->addr) {
+			return;
+		}
+	}
 	// eprintf ("ADD\n");
-	RBinDbgItemInternal *di = R_NEW0 (RBinDbgItemInternal);
+	di = R_NEW0 (RBinDbgItemInternal);
 	di->addr = item.addr;
 	di->line = item.line;
 	di->colu = item.column;

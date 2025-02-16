@@ -1157,18 +1157,7 @@ static const ut8 *parse_line_header(RBin *bin, RBinFile *bf, const ut8 *buf, con
 }
 
 static inline void add_sdb_addrline(RBinFile *bf, ut64 addr, const char *file, ut64 line, ut64 column, int mode, PrintfCallback print) {
-#if 1
-	RBinDbgItem item = {
-		.addr = addr,
-		.file = file,
-		.line = line,
-		.column = column,
-	};
-	bf->addrline.al_add (&bf->addrline, item);
-#else
 	Sdb *s = bf->sdb_addrinfo;
-	char offset[SDB_NUM_BUFSZ];
-	char *offset_ptr;
 	if (!s || R_STR_ISEMPTY (file)) {
 		return;
 	}
@@ -1204,6 +1193,9 @@ static inline void add_sdb_addrline(RBinFile *bf, ut64 addr, const char *file, u
 #else
 	p = file;
 #endif
+#if 0
+	char offset[SDB_NUM_BUFSZ];
+	char *offset_ptr;
 	char *fileline = (column > 0)
 		? r_str_newf ("%s|%"PFMT64d"|%"PFMT64d, p, line, column)
 		: r_str_newf ("%s|%"PFMT64d, p, line);
@@ -1214,6 +1206,14 @@ static inline void add_sdb_addrline(RBinFile *bf, ut64 addr, const char *file, u
 	sdb_add (s, offset_ptr, fileline, 0);
 	sdb_add (s, fileline, offset_ptr, 0);
 	free (fileline);
+#else
+	RBinDbgItem item = {
+		.addr = addr,
+		.file = file,
+		.line = line,
+		.column = column,
+	};
+	bf->addrline.al_add (&bf->addrline, item);
 #endif
 }
 
@@ -2783,48 +2783,10 @@ R_API RList *r_bin_dwarf_parse_line(RBin *bin, int mode) {
 		/* set the endianity global [HOTFIX] */
 		// Actually parse the section
 		parse_line_raw (bin, buf, len, mode, be);
-r_bin_dbginfo_reset(bin);
-		// k bin/cur/addrinfo/*
-#if 0
-		SdbListIter *iter;
-		SdbKv *kv;
-		SdbList *ls = sdb_foreach_list (bf->sdb_addrinfo, false);
-		// Use the parsed information from _raw and transform it to more useful format
-		ls_foreach (ls, iter, kv) {
-			const char *key = sdbkv_key (kv);
-			if (r_str_startswith (key, "0x")) {
-				char *file = strdup (sdbkv_value (kv));
-				if (!file) {
-					free (buf);
-					ls_free (ls);
-					r_list_free (list);
-					return NULL;
-				}
-				char *tok = strchr (file, '|');
-				if (tok) {
-					*tok++ = 0;
-					int line = atoi (tok);
-					int column = 0;
-					char *tok2 = strchr (tok, '|');
-					if (tok2) {
-						column = atoi (tok2 + 1);
-					}
-					ut64 addr = r_num_get (NULL, key);
-					RBinDbgItem *row = row_new (addr, file, line, column);
-					if (row) {
-						r_list_append (list, row);
-					}
-				}
-				free (file);
-			}
-		}
-		ls_free (ls);
-#else
 		if (bin->cur && bin->cur->addrline.used) {
 			RBinAddrLineStore *als = &bin->cur->addrline;
 			als->al_foreach (als, cb, list);
 		}
-#endif
 		free (buf);
 	}
 	return list;
