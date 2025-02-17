@@ -632,9 +632,11 @@ static void al_del(RBinAddrLineStore *als, ut64 addr) {
 
 static RBinDbgItem* al_get(RBinAddrLineStore *als, ut64 addr) {
 	AddrLineStore *store = als->storage;
-	if (!r_bloom_check (store->bloom, &addr, sizeof (addr))) {
+#if 0
+	if (r_bloom_check (store->bloom, &addr, sizeof (addr))) {
 		return NULL;
 	}
+#endif
 	RListIter *iter;
 	RBinDbgItemInternal *item;
 	R_LOG_DEBUG ("ITEMS %d / %d", store->pool->count, r_list_length (store->list));

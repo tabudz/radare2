@@ -545,6 +545,8 @@ extern "C" {
 #define DW_LANG_UPC                     0x0012
 #define DW_LANG_D                       0x0013
 #define DW_LANG_Python                  0x0014
+#define DW_LANG_OpenCL                  0x0015
+#define DW_LANG_Modula3                 0x0016
 #define DW_LANG_Rust                    0x001c
 #define DW_LANG_C11                     0x001d
 #define DW_LANG_Swift                   0x001e

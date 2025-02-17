@@ -309,7 +309,9 @@ static const char *dwarf_langs[] = {
 	[DW_LANG_Dylan] = "Dylan",
 	[DW_LANG_C_plus_plus_14] = "C++14",
 	[DW_LANG_Fortran03] = "Fortran03",
-	[DW_LANG_Fortran08] = "Fortran08"
+	[DW_LANG_Fortran08] = "Fortran08",
+	[DW_LANG_Modula3] = "Modula3",
+	[DW_LANG_OpenCL] = "OpenCL",
 };
 
 static const char *dwarf_unit_types[] = {
