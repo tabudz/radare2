@@ -140,6 +140,7 @@ static RCoreHelpMessage help_msg_i = {
 static RCoreHelpMessage help_msg_id = {
 	"Usage: idp", "", "Debug information",
 	"id", "", "show DWARF source lines information",
+	"idj", "", "show addrline information in json format",
 	"idp", " [file.pdb]", "load pdb file information",
 	"idpi", " [file.pdb]", "show pdb file information",
 	"idpi*", "", "show symbols from pdb as flags (prefix with dot to import)",
@@ -1740,6 +1741,8 @@ static void cmd_id(RCore *core, PJ *pj, const char *input, bool is_array, int mo
 	} else if (input[1] == '?') { // "id?"
 		r_core_cmd_help (core, help_msg_id);
 		input++;
+	} else if (input[1] == 'j') { // "idj"
+		RBININFO ("dwarf", R_CORE_BIN_ACC_DWARF, NULL, -1);
 	} else if (input[1] == 0) { // "id"
 		RBININFO ("dwarf", R_CORE_BIN_ACC_DWARF, NULL, -1);
 	} else {

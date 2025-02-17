@@ -1021,7 +1021,6 @@ static const ut8 *parse_line_header_source_dwarf5(RBin *bin, const ut8 *buf, con
 					}
 					char *tmp = r_str_newf ("%s/%s/%s",
 								comp_unit_dir, dir, filename);
-					eprintf ("FILENAME %s\n", tmp);
 					file->name = tmp;
 					free (filename);
 				}
