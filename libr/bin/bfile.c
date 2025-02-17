@@ -1372,4 +1372,6 @@ R_API void r_bin_file_merge(RBinFile *dst, RBinFile *src) {
 	sdb_merge (dst->bo->kv, src->bo->kv);
 	sdb_merge (dst->sdb_addrinfo, src->sdb_addrinfo);
 	sdb_merge (dst->sdb_info, src->sdb_info);
+	dst->addrline = src->addrline;
+	memset (&src->addrline, 0, sizeof (src->addrline));
 }

@@ -2751,7 +2751,7 @@ R_API RBinDwarfDebugInfo *r_bin_dwarf_parse_info(RBin *bin, RBinDwarfDebugAbbrev
 		info = parse_info_raw (bin, bf->sdb_addrinfo, da, buf, len, be);
 		if (mode == R_MODE_PRINT && info) {
 			print_debug_info (info, bin->cb_printf);
-		} else {
+		} else if (info) {
 			// TODO: load compilation units
 			// TODO: only necessary when we have no srcline inf
 			// TODO: add a command to enumerate the ranges for all the compilation units

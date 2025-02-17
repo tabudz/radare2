@@ -134,14 +134,6 @@ line: 2
 colu: 0
 addr: 0x100003f64
 file: /Users/pancake/hello.c
-line: 5
-colu: 2
-addr: 0x100003f80
-file: /Users/pancake/hello.c
-line: 0
-colu: 0
-addr: 0x100003f78
-file: /Users/pancake/hello.c
 line: 0
 colu: 0
 addr: 0x100003f6c
@@ -150,13 +142,21 @@ line: 3
 colu: 2
 addr: 0x100003f74
 file: /Users/pancake/hello.c
-line: 6
-colu: 1
-addr: 0x100003f90
+line: 0
+colu: 0
+addr: 0x100003f78
+file: /Users/pancake/hello.c
+line: 5
+colu: 2
+addr: 0x100003f80
 file: /Users/pancake/hello.c
 line: 6
 colu: 1
 addr: 0x100003f88
+file: /Users/pancake/hello.c
+line: 6
+colu: 1
+addr: 0x100003f90
 EOF
 RUN
 
