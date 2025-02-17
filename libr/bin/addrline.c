@@ -65,7 +65,7 @@ R_API bool r_bin_dbginfo_foreach(RBin *bin, RBinDbgInfoCallback cb, void *user) 
 		als->al_foreach (als, cb, user);
 		return true;
 	}
-	R_LOG_ERROR ("Callback is not matching");
+	R_LOG_DEBUG ("Callback is not matching");
 	return false;
 }
 
