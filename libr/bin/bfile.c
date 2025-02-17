@@ -535,7 +535,7 @@ static void al_add(RBinAddrLineStore *als, RBinDbgItem item) {
 	als->used = true;
 	RListIter *iter;
 	RBinDbgItemInternal *di;
-	if (r_bloom_check (store->bloom, &item.addr, sizeof (item.addr))) {
+	if (!r_bloom_check (store->bloom, &item.addr, sizeof (item.addr))) {
 		/// XXX super slow but necessary
 		r_list_foreach (store->list, iter, di) {
 			if (item.addr == di->addr) {
@@ -632,6 +632,9 @@ static void al_del(RBinAddrLineStore *als, ut64 addr) {
 
 static RBinDbgItem* al_get(RBinAddrLineStore *als, ut64 addr) {
 	AddrLineStore *store = als->storage;
+	if (!r_bloom_check (store->bloom, &addr, sizeof (addr))) {
+		return NULL;
+	}
 	RListIter *iter;
 	RBinDbgItemInternal *item;
 	R_LOG_DEBUG ("ITEMS %d / %d", store->pool->count, r_list_length (store->list));
