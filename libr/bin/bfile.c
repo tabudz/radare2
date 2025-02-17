@@ -575,6 +575,20 @@ static RBinDbgItem* dbgitem_from_internal(RBinAddrLineStore *als, RBinDbgItemInt
 	return di;
 }
 
+static RList *al_files(RBinAddrLineStore *als) {
+	AddrLineStore *store = als->storage;
+	RList *files = r_list_newf (free);
+	int i = 0;
+	for (i = 0; true; i++) {
+		char *n = r_ustrpool_get_nth (store->pool, i);
+		if (!n) {
+			break;
+		}
+		r_list_append (files, strdup (n));
+	}
+	return files;
+}
+
 static void al_foreach(RBinAddrLineStore *als, RBinDbgInfoCallback cb, void *user) {
 	AddrLineStore *store = als->storage;
 
@@ -627,6 +641,7 @@ static void addrline_store_init(RBinAddrLineStore *b) {
 	b->al_reset = al_reset;
 	// b->al_reset_at = al_reset_at;
 	b->al_foreach = al_foreach;
+	b->al_files = al_files;
 }
 
 static void addrline_store_fini(RBinAddrLineStore *als) {

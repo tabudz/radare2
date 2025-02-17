@@ -22,9 +22,8 @@ FILE=bins/elf/analysis/dwarf_load
 # ARGS=-e bin.dbginfo=0
 CMDS=idx
 EXPECT=<<EOF
-/home/landley/work/ab7/build/temp-armv6l/gcc-core/gcc/config/arm/ieee754-df.S
 /home/landley/work/ab7/build/temp-armv6l/gcc-core/gcc/config/arm/lib1funcs.asm
-/home/landley/work/ab7/build/temp-armv6l/build-gcc/gcc
+/home/landley/work/ab7/build/temp-armv6l/gcc-core/gcc/config/arm/ieee754-df.S
 EOF
 RUN
 

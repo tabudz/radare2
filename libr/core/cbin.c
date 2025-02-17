@@ -1346,9 +1346,11 @@ R_API bool r_core_pdb_info(RCore *core, const char *file, PJ *pj, int mode) {
 	return true;
 }
 
+#if 0
 static ut64 srclineVal(const void *a) {
 	return r_str_hash64 (a);
 }
+#endif
 
 static bool bin_source(RCore *r, PJ *pj, int mode) {
 	RList *final_list = r_list_new ();
@@ -1362,7 +1364,15 @@ static bool bin_source(RCore *r, PJ *pj, int mode) {
 		r_list_free (final_list);
 		return false;
 	}
-
+#if 1
+	// TODO: future optimization: dump the stringpool containing filenames
+	RList *files = r_bin_dbginfo_files (r->bin);
+	if (files) {
+		char *s = r_str_list_join (files, "\n");
+		r_cons_println (s);
+		free (s);
+	}
+#else
 	SdbListIter *iter;
 	RListIter *iter2;
 	char* srcline;
@@ -1384,6 +1394,7 @@ static bool bin_source(RCore *r, PJ *pj, int mode) {
 		r_cons_printf ("%s\n", srcline);
 	}
 	r_list_free (final_list);
+#endif
 	return true;
 }
 

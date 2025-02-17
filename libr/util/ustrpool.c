@@ -89,7 +89,7 @@ R_API int r_ustrpool_append(RUStrpool *p, const char *s) {
 	R_RETURN_VAL_IF_FAIL (p && s, -1);
 	const int l = strlen (s) + 1;
 	const int idx = strpool_memcat (p, s, l);
-	r_bloom_add (p->bloom, s, l);
+	r_bloom_add (p->bloom, s, l - 1);
 	p->idxs[p->count] = idx;
 	int pos = p->count;
 	p->count++;

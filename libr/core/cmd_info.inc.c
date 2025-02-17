@@ -1,4 +1,4 @@
-/* radare - LGPL - Copyright 2009-2024 - pancake */
+/* radare - LGPL - Copyright 2009-2025 - pancake */
 
 #if R_INCLUDE_BEGIN
 
@@ -1740,8 +1740,10 @@ static void cmd_id(RCore *core, PJ *pj, const char *input, bool is_array, int mo
 	} else if (input[1] == '?') { // "id?"
 		r_core_cmd_help (core, help_msg_id);
 		input++;
-	} else { // "id"
+	} else if (input[1] == 0) { // "id"
 		RBININFO ("dwarf", R_CORE_BIN_ACC_DWARF, NULL, -1);
+	} else {
+		r_core_return_invalid_command (core, "id", input[1]);
 	}
 }
 
