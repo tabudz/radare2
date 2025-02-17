@@ -527,6 +527,7 @@ static void get_strings_range(RBinFile *bf, RList *list, int min, int raw, bool 
 typedef struct {
 	RList *list;
 	RUStrpool *pool;
+	RBloom *bloom;
 } AddrLineStore;
 
 static void al_add(RBinAddrLineStore *als, RBinDbgItem item) {
@@ -534,10 +535,12 @@ static void al_add(RBinAddrLineStore *als, RBinDbgItem item) {
 	als->used = true;
 	RListIter *iter;
 	RBinDbgItemInternal *di;
-	/// XXX super slow but necessary
-	r_list_foreach (store->list, iter, di) {
-		if (item.addr == di->addr) {
-			return;
+	if (r_bloom_check (store->bloom, &item.addr, sizeof (item.addr))) {
+		/// XXX super slow but necessary
+		r_list_foreach (store->list, iter, di) {
+			if (item.addr == di->addr) {
+				return;
+			}
 		}
 	}
 	// eprintf ("ADD\n");
@@ -644,6 +647,7 @@ static void addrline_store_init(RBinAddrLineStore *b) {
 	AddrLineStore *als = R_NEW0 (AddrLineStore);
 	als->list = r_list_newf (free);
 	als->pool = r_ustrpool_new ();
+	als->bloom = r_bloom_new (1024, 2, NULL);
 	b->storage = (void*)als;
 	b->al_add = al_add;
 	b->al_add_cu = al_add_cu;
@@ -656,6 +660,9 @@ static void addrline_store_init(RBinAddrLineStore *b) {
 }
 
 static void addrline_store_fini(RBinAddrLineStore *als) {
+	AddrLineStore *store = als->storage;
+	r_bloom_free (store->bloom);
+	r_list_free (store->list);
 	free (als->storage);
 }
 //////////////////////////////////
