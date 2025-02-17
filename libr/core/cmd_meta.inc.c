@@ -367,7 +367,22 @@ static bool print_addrinfo(void *user, const char *k, const char *v) {
 	return true;
 }
 
-static int cmd_meta_add_fileline(Sdb *s, const char *fileline, ut64 offset) {
+static int cmd_meta_add_fileline(RBinFile *bf, const char *fileline, ut64 offset) {
+#if 1
+	char *file = strdup (fileline);
+	char *line = strchr (file, ':');
+	if (line) {
+		*line++ = 0;
+	}
+	RBinDbgItem item = {
+		.addr = offset,
+		.file = file,
+		.line = line? atoi (line): 0,
+	};
+	bf->addrline.al_add (&bf->addrline, item);
+	free (file);
+#else
+	Sdb *s = bf->sdb_addrinfo;
 	char aoffset[SDB_NUM_BUFSZ];
 	char *aoffsetptr = sdb_itoa (offset, 16, aoffset, sizeof (aoffset));
 	if (!aoffsetptr) {
@@ -379,6 +394,7 @@ static int cmd_meta_add_fileline(Sdb *s, const char *fileline, ut64 offset) {
 	if (!sdb_add (s, fileline, aoffsetptr, 0)) {
 		sdb_set (s, fileline, aoffsetptr, 0);
 	}
+#endif
 	return 0;
 }
 
@@ -458,7 +474,9 @@ retry:
 		offset = core->offset;
 		p = strdup (r_str_trim_head_ro (p + 1));
 		RBinFile *bf = r_bin_cur (core->bin);
-		ret = cmd_meta_add_fileline (bf->sdb_addrinfo, p, offset);
+		if (bf) {
+			ret = cmd_meta_add_fileline (bf, p, offset);
+		}
 		return 0;
 	} else if (*p == ' ') { // "CL "
 		p = r_str_trim_head_ro (p + 1);
@@ -508,9 +526,9 @@ retry:
 			sp = pheap = (char *)o;
 		}
 		RBinFile *bf = r_bin_cur (core->bin);
-		if (bf && bf->sdb_addrinfo) {
-			R_LOG_ERROR ("deprecated way to add addrinfo metadata");
-			ret = cmd_meta_add_fileline (bf->sdb_addrinfo, sp, offset);
+		if (bf) {
+			// R_LOG_ERROR ("deprecated way to add addrinfo metadata");
+			ret = cmd_meta_add_fileline (bf, sp, offset);
 		} else {
 			R_LOG_TODO ("Support global SdbAddrinfo or dummy rbinfile to handle this case");
 			ret = 0;
@@ -535,11 +553,15 @@ retry:
 			fs.pj = pj;
 			pj_a (pj);
 			if (!r_bin_dbginfo_foreach (core->bin, print_addrinfo2_json, &fs)) {
-				sdb_foreach (bf->sdb_addrinfo, print_addrinfo_json, &fs);
+				if (bf && bf->sdb_addrinfo) {
+					sdb_foreach (bf->sdb_addrinfo, print_addrinfo_json, &fs);
+				}
 			}
 		} else {
 			if (!r_bin_dbginfo_foreach (core->bin, print_addrinfo2, &fs)) {
-				sdb_foreach (bf->sdb_addrinfo, print_addrinfo, &fs);
+				if (bf && bf->sdb_addrinfo) {
+					sdb_foreach (bf->sdb_addrinfo, print_addrinfo, &fs);
+				}
 			}
 		}
 		if (fs.filter_count == 0) {

@@ -1,4 +1,4 @@
-/* radare - LGPL - Copyright 2012-2024 - pancake, Fedor Sakharov */
+/* radare - LGPL - Copyright 2012-2025 - pancake, Fedor Sakharov */
 
 #include <r_core.h>
 #include "format/elf/elf.h"
