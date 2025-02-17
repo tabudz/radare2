@@ -59,7 +59,7 @@ R_API void r_bin_dbginfo_reset_at(RBin *bin, ut64 addr) {
 	sdb_unset (bin->cur->sdb_addrinfo, aoffsetptr, 0);
 }
 
-R_API RList *r_bin_dbginfo_files(RBin *bin, void *user) {
+R_API RList *r_bin_dbginfo_files(RBin *bin) {
 	if (bin->cur && bin->cur->addrline.used) {
 		RBinAddrLineStore *als = &bin->cur->addrline;
 		return als->al_files (als);
