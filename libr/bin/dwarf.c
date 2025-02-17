@@ -659,6 +659,9 @@ static const ut8 *parse_line_header_source(RBinFile *bf, const ut8 *buf, const u
 					hdr->file_names[count].id_idx = id_idx;
 					hdr->file_names[count].mod_time = mod_time;
 					hdr->file_names[count].file_len = file_len;
+
+					// TODO: add_sdb_addrline (bf, hdr->file_names[count].name);
+					// eprintf ("ADP %s\n", hdr->file_names[count].name);
 				}
 				R_FREE (include_dir);
 			}
@@ -670,6 +673,10 @@ static const ut8 *parse_line_header_source(RBinFile *bf, const ut8 *buf, const u
 		}
 		if (i == 0) {
 			hdr->file_names = calloc (sizeof (file_entry), count);
+			if (!hdr->file_names) {
+				R_LOG_ERROR ("Cannot calloc %d", count);
+				break;
+			}
 			hdr->file_names_count = count;
 			buf = tmp_buf;
 			count = 1;
@@ -901,32 +908,33 @@ static const ut8 *parse_line_header_source_dwarf5(RBin *bin, const ut8 *buf, con
 		R_LOG_WARN ("Invalid uleb128 for dwarf directory count");
 		return NULL;
 	}
-	buf = nbuf;
-
 	ut64 i, j;
-	for (i = 0; i < ndir_entry; i++) {
-		for (j = 0; j < dir_form.ndesc; j++) {
-			entry_descriptor desc = dir_form.descs[j];
-			char *name = NULL;
+	if ((int)ndir_entry != -1) {
+		buf = nbuf;
+		for (i = 0; i < ndir_entry; i++) {
+			for (j = 0; j < dir_form.ndesc; j++) {
+				entry_descriptor desc = dir_form.descs[j];
+				char *name = NULL;
 
-			switch (desc.type) {
-			case DW_LNCT_path:
-				buf = str_form_value (desc, bin, buf, buf_end, &name, be, hdr->is_64bit);
-				if (buf == NULL || name == NULL) {
-					R_LOG_WARN ("Invalid description (%#x) for directory", desc.form);
+				switch (desc.type) {
+				case DW_LNCT_path:
+					buf = str_form_value (desc, bin, buf, buf_end, &name, be, hdr->is_64bit);
+					if (buf == NULL || name == NULL) {
+						R_LOG_WARN ("Invalid description (%#x) for directory %d %d", desc.form, i, ndir_entry);
+						return NULL;
+					}
+					add_sdb_include_dir (s, name, i);
+					free (name);
+					break;
+				default:
+					R_LOG_WARN ("Invalid description type (%#x)", desc.type);
+					// TODO: Skip this value instead of failing?
 					return NULL;
 				}
-				add_sdb_include_dir (s, name, i);
-				free (name);
-				break;
-			default:
-				R_LOG_WARN ("Invalid description (%#x) for directory", desc.type);
-				// TODO: Skip this value instead of failing?
-				return NULL;
 			}
-		}
-		if (mode == R_MODE_PRINT) {
-			print ("  %" PFMT64u "     %s\n", i, sdb_array_get (s, "includedirs", i, 0));
+			if (mode == R_MODE_PRINT) {
+				print ("  %" PFMT64u "     %s\n", i, sdb_array_get (s, "includedirs", i, 0));
+			}
 		}
 	}
 
@@ -943,8 +951,8 @@ static const ut8 *parse_line_header_source_dwarf5(RBin *bin, const ut8 *buf, con
 		return NULL;
 	}
 	if (file_form.ndesc <= 0) {
-			R_LOG_WARN ("Invalid number of descriptors for file table");
-			return NULL;
+		R_LOG_WARN ("Invalid number of descriptors for file table");
+		return NULL;
 	}
 
 	ut64 nfile_entry = 0;
@@ -1014,6 +1022,7 @@ static const ut8 *parse_line_header_source_dwarf5(RBin *bin, const ut8 *buf, con
 					}
 					char *tmp = r_str_newf ("%s/%s/%s",
 								comp_unit_dir, dir, filename);
+					eprintf ("FILENAME %s\n", tmp);
 					file->name = tmp;
 					free (filename);
 				}
@@ -1142,12 +1151,13 @@ static const ut8 *parse_line_header(RBin *bin, RBinFile *bf, const ut8 *buf, con
 		hdr->std_opcode_lengths = NULL;
 	}
 
+	// XXX dat leaks
 	Sdb *sdb = sdb_new (NULL, NULL, 0);
 	if (!sdb) {
 		return NULL;
 	}
 
-	if (hdr->version <= 4) {
+	if (hdr->version < 5) {
 		buf = parse_line_header_source (bf, buf, buf_end, hdr, sdb, mode, print, debug_line_offset);
 	} else {
 		buf = parse_line_header_source_dwarf5 (bin, buf, buf_end, hdr, sdb, mode, print, be);
@@ -1339,7 +1349,7 @@ static const ut8 *parse_spec_opcode(
 		print ("advance Address by %"PFMT64d " to 0x%"PFMT64x" and Line by %d to %"PFMT64d"\n",
 			advance_adr, regs->address, line_increment, regs->line);
 	}
-	if (binfile && binfile->sdb_addrinfo && hdr->file_names) {
+	if (binfile && hdr->file_names) {
 		int idx = regs->file;
 		if (idx >= 0 && idx < hdr->file_names_count) {
 			add_sdb_addrline (binfile, regs->address,
@@ -1377,7 +1387,7 @@ static const ut8 *parse_std_opcode(RBin *bin, const ut8 *obuf, size_t len, const
 		if (mode == R_MODE_PRINT) {
 			print ("Copy\n");
 		}
-		if (binfile && binfile->sdb_addrinfo && hdr->file_names) {
+		if (binfile && hdr->file_names) {
 			int fnidx = regs->file;
 			if (fnidx >= 0 && fnidx < hdr->file_names_count) {
 				add_sdb_addrline (binfile,
