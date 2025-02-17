@@ -2,7 +2,11 @@ NAME=test dwarf dos
 FILE=bins/elf/dwarf/dos
 CMDS=idx
 EXPECT=<<EOF
-/var/tmp/portage/sys-libs/glibc-2.40-r5/work/glibc-2.40/csu
+/var/tmp/portage/sys-libs/glibc-2.40-r5/work/glibc-2.40/csu/../sysdeps/x86_64/start.S
+/var/tmp/portage/sys-libs/glibc-2.40-r5/work/glibc-2.40/csu/../sysdeps/x86/abi-note.c
+/var/tmp/portage/sys-libs/glibc-2.40-r5/work/glibc-2.40/csu/init.c
+/var/tmp/portage/sys-libs/glibc-2.40-r5/work/glibc-2.40/csu/../sysdeps/x86_64/crti.S
+/var/tmp/portage/sys-libs/glibc-2.40-r5/work/glibc-2.40/csu/../sysdeps/x86_64/crtn.S
 EOF
 RUN
 

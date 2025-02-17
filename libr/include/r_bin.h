@@ -406,6 +406,7 @@ struct r_bin_addrline_store_t {
 	bool used; // deprecated when finished
 	void *storage;
 	RBinAddrLineAdd al_add;
+	RBinAddrLineAdd al_add_cu;
 	RBinAddrLineGet al_get;
 	RBinAddrLineDel al_del;
 	RBinAddrLineReset al_reset;

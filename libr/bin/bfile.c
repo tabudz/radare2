@@ -550,6 +550,16 @@ static void al_add(RBinAddrLineStore *als, RBinDbgItem item) {
 	r_list_append (store->list, di);
 }
 
+static void al_add_cu(RBinAddrLineStore *als, RBinDbgItem item) {
+	AddrLineStore *store = als->storage;
+	// TODO: add storage for the compilation units here
+	// we are just storing the filename in the stringpool for `idx` purposes
+	if (item.file) {
+		als->used = true;
+		r_ustrpool_add (store->pool, item.file);
+	}
+}
+
 static void al_reset(RBinAddrLineStore *als) {
 	AddrLineStore *store = als->storage;
 	r_list_free (store->list);
@@ -636,6 +646,7 @@ static void addrline_store_init(RBinAddrLineStore *b) {
 	als->pool = r_ustrpool_new ();
 	b->storage = (void*)als;
 	b->al_add = al_add;
+	b->al_add_cu = al_add_cu;
 	b->al_get = al_get;
 	b->al_del = al_del;
 	b->al_reset = al_reset;
