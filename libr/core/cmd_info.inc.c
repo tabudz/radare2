@@ -1627,9 +1627,10 @@ static void cmd_it(RCore *core, PJ *pj) {
 
 static void cmd_id(RCore *core, PJ *pj, const char *input, bool is_array, int mode) {
 	const bool va = r_config_get_b (core->config, "io.va");
-	if (input[1] == 'x') { // "idx" "iX"
+	const char input1 = input[1];
+	if (input1 == 'x') { // "idx" "iX"
 		RBININFO ("source", R_CORE_BIN_ACC_SOURCE, NULL, 0);
-	} else if (input[1] == 'p') { // "idp"
+	} else if (input1 == 'p') { // "idp"
 		SPDBOptions pdbopts;
 		RBinInfo *info;
 		bool file_found;
@@ -1738,12 +1739,10 @@ static void cmd_id(RCore *core, PJ *pj, const char *input, bool is_array, int mo
 			break;
 		}
 		input++;
-	} else if (input[1] == '?') { // "id?"
+	} else if (input1 == '?') { // "id?"
 		r_core_cmd_help (core, help_msg_id);
 		input++;
-	} else if (input[1] == 'j') { // "idj"
-		RBININFO ("dwarf", R_CORE_BIN_ACC_DWARF, NULL, -1);
-	} else if (input[1] == 0) { // "id"
+	} else if (input1 == 'q' || input1 == 'j' || !input1 || input1 == '*') { // "idj"
 		RBININFO ("dwarf", R_CORE_BIN_ACC_DWARF, NULL, -1);
 	} else {
 		r_core_return_invalid_command (core, "id", input[1]);
