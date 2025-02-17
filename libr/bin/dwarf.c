@@ -2787,7 +2787,7 @@ R_API RBinDwarfDebugInfo *r_bin_dwarf_parse_info(RBin *bin, RBinDwarfDebugAbbrev
 					}
 					if (path && name) {
 						// printf ("0x%08"PFMT64x" %s %s\n", low, path, name);
-						char *abspath = r_str_newf ("%s/%s", path, name);
+						char *abspath = (*name != '/')? r_str_newf ("%s/%s", path, name): strdup (name);
 						RBinDbgItem item = {
 							.addr = low + 1, // XXX this low is wrong, we must add compilation units not addrline
 							.file = abspath,
