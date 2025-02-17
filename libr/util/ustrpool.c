@@ -91,10 +91,10 @@ R_API int r_ustrpool_append(RUStrpool *p, const char *s) {
 	const int idx = strpool_memcat (p, s, l);
 	r_bloom_add (p->bloom, s, l);
 	p->idxs[p->count] = idx;
+	int pos = p->count;
 	p->count++;
 	strpool_resize_count (p);
 	return pos;
-	return idx;
 }
 
 R_API void r_ustrpool_free(RUStrpool *p) {
